@@ -1,0 +1,40 @@
+---
+- name: Install Docker and deploy Hello Java app
+  hosts: dev
+  become: yes
+  tasks:
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create app directory
+      file:
+        path: /root/hello-java
+        state: directory
+        mode: '0755'
+
+    - name: Copy Dockerfile to worker node
+      copy:
+        src: ./Dockerfile
+        dest: /root/hello-java/Dockerfile
+
+    - name: Copy Hello.java to worker node
+      copy:
+        src: ./Hello.java
+        dest: /root/hello-java/Hello.java
+
+    - name: Build Docker image
+      shell: docker build -t hello-java /root/hello-java
+      args:
+        chdir: /root/hello-java
+
+    - name: Run Docker container
+      shell: docker run -d -p 80:80 --name hello-java-container hello-java
